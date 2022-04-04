@@ -1,0 +1,31 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/infra.ts",
+  "watch": {
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
+      "package*.json",
+      "yarn.lock",
+      "node_modules",
+      "test"
+    ]
+  },
+  "context": {
+    "@aws-cdk/core:target-partitions": [
+      "aws",
+      "aws-cn"
+    ],
+    "ecs-cluster": {
+      "maxAzs": 3,
+      "vpcId": "vpc-839f38fe",
+      "region": "us-east-1",
+      "desiredCapacity": 3
+    }
+  }
+}
