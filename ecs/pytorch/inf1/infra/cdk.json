@@ -21,10 +21,10 @@
       "aws",
       "aws-cn"
     ],
+    "region": "us-east-1",
     "ecs-cluster": {
       "maxAzs": 3,
-      "vpcId": "vpc-839f38fe",
-      "region": "us-east-1",
+      "vpcId": "",
       "desiredCapacity": 3
     }
   }

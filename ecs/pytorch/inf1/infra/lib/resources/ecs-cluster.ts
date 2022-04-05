@@ -5,16 +5,18 @@ import cdk = require('aws-cdk-lib');
 import { Construct } from 'constructs';
 
 export class ECSCluster {
+  cluster: ecs.Cluster
   constructor() {}
-    
+
   public createResources(scope: Construct) {
     const context = scope.node.tryGetContext('ecs-cluster');
+    const region = scope.node.tryGetContext('region');
     const vpc = ((context) => {
       const vpcId = context['vpcId']
       if (!vpcId) {
         return new ec2.Vpc(scope, 'Vpc', { maxAzs: context['maxAzs'] });
       } else {
-        return ec2.Vpc.fromLookup(scope, 'Vpc', { vpcId: vpcId, region: context['region'] } );
+        return ec2.Vpc.fromLookup(scope, 'Vpc', { vpcId: vpcId, region: region } );
       }
     })(context);
 
@@ -25,8 +27,12 @@ export class ECSCluster {
       vpc,
     });
 
-    const cluster = new ecs.Cluster(scope, 'EcsCluster', { vpc });
+    this.cluster = new ecs.Cluster(scope, 'EcsCluster', { vpc });
     const capacityProvider = new ecs.AsgCapacityProvider(scope, 'AsgCapacityProvider', { autoScalingGroup: asg });
-    cluster.addAsgCapacityProvider(capacityProvider);
+    this.cluster.addAsgCapacityProvider(capacityProvider);
+  }
+
+  public getCluster() {
+    return this.cluster
   }
 }
