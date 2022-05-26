@@ -30,6 +30,8 @@ class ModelInference:
         self.model = torch.jit.load(model_path)
 
     def _conv_to_tokens_from_(self, index):
+        print("item", index.item())
+        print(self.tokenizer.convert_ids_to_tokens(index.item()))
         return self.tokenizer.convert_ids_to_tokens([index.item()])[0]
 
     def infer(self, message):
@@ -42,17 +44,19 @@ class ModelInference:
         logger.info("Tokenized text : " + ",".join(tokenized_text))
         tokenized_text[masked_index] = "[MASK]"
         logger.info("Masked text : " + ",".join(tokenized_text))
-        indexed_tokens = self.tokenizer.encode_plus(
-            tokenized_text,
-            return_tensors='pt',
+        encoding = self.tokenizer.encode_plus(
+            text,
+            return_tensors="pt",
             max_length=LENGTH,
-            padding='max_length',
-            truncation=True
+            padding="max_length",
+            truncation=True,
         )
-        tokens_tensor = indexed_tokens['input_ids']
+        model_input = (
+            encoding["input_ids"],
+            encoding["attention_mask"]
+        )
         with torch.no_grad():
-            outputs = self.model(tokens_tensor)
-            # outputs = self.model(indexed_tokens)
+            outputs = self.model(*model_input)
             preds = outputs[0][0, masked_index].topk(5)
 
         tokens = [self._conv_to_tokens_from_(idx) for idx in preds.indices]
