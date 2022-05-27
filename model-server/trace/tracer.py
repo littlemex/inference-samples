@@ -5,7 +5,6 @@ from transformers import BertForMaskedLM, BertJapaneseTokenizer
 model_name = "cl-tohoku/bert-base-japanese-whole-word-masking"
 ptname = "transformers_neuron.pt"
 processor = "inf1"
-pipeline_cores = 1
 
 LENGTH = 512
 

@@ -3,8 +3,8 @@ import sys
 from logging import DEBUG, StreamHandler, getLogger
 from typing import List
 
-import torch_neuron
 import torch
+import torch_neuron
 from fastapi import FastAPI
 from pydantic import BaseModel, constr
 from transformers import BertJapaneseTokenizer
@@ -37,12 +37,12 @@ class ModelInference:
     def infer(self, message):
 
         text = message.text
-        masked_index = message.masked_index
+        mask_index = message.mask_index
 
         logger.info(f"Input text : {text}")
         tokenized_text = self.tokenizer.tokenize(text)
         logger.info("Tokenized text : " + ",".join(tokenized_text))
-        tokenized_text[masked_index] = "[MASK]"
+        tokenized_text[mask_index] = "[MASK]"
         logger.info("Masked text : " + ",".join(tokenized_text))
         encoding = self.tokenizer.encode_plus(
             text,
@@ -57,7 +57,7 @@ class ModelInference:
         )
         with torch.no_grad():
             outputs = self.model(*model_input)
-            preds = outputs[0][0, masked_index].topk(5)
+            preds = outputs[0][0, mask_index].topk(5)
 
         tokens = [self._conv_to_tokens_from_(idx) for idx in preds.indices]
 
@@ -66,7 +66,7 @@ class ModelInference:
 
 class UserRequestIn(BaseModel):
     text: constr(min_length=1)
-    masked_index: int
+    mask_index: int
 
 
 class MaskedTextOut(BaseModel):
@@ -88,6 +88,6 @@ async def inferences(message: UserRequestIn):
 
 
 if __name__ == "__main__":
-    request = {"text": "私は東京へ行く", "masked_index": 2}
+    request = {"text": "私は東京へ行く", "mask_index": 2}
     message = UserRequestIn(**request)
     print(model_class.predict(message))

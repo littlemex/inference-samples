@@ -8,7 +8,7 @@ curl -X 'POST' \
   -H 'Content-Type: application/json' \
   -d '{
   "text": "お爺さんは森に狩りへ出かける",
-  "masked_index": 7
+  "mask_index": 7
 }'
 sleep 10
 done
