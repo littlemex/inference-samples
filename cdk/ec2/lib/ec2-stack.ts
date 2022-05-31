@@ -79,9 +79,9 @@ export class Ec2Stack extends Stack {
     asset.grantRead(ec2Inf1Instance.role);
 
     // Create outputs for connecting
-    new cdk.CfnOutput(this, 'IP Address', { value: ec2Inf1Instance.instancePublicIp });
+    new cdk.CfnOutput(this, 'EC2 IP Address', { value: ec2Inf1Instance.instancePublicIp });
     new cdk.CfnOutput(this, 'Key Name', { value: key.keyPairName })
     new cdk.CfnOutput(this, 'Download Key Command', { value: 'aws secretsmanager get-secret-value --secret-id ec2-ssh-key/cdk-keypair/private --query SecretString --output text > ~/.ssh/cdk-keypair.pem && chmod 400 ~/.ssh/cdk-keypair.pem' })
-    new cdk.CfnOutput(this, 'ssh command', { value: 'ssh -i ~/.ssh/cdk-keypair.pem -o IdentitiesOnly=yes ubuntu@' + ec2Inf1Instance.instancePublicIp })
+    new cdk.CfnOutput(this, 'SSH Command', { value: 'ssh -i ~/.ssh/cdk-keypair.pem -o IdentitiesOnly=yes ubuntu@' + ec2Inf1Instance.instancePublicIp })
   }    
 }

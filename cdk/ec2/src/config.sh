@@ -1,7 +1,8 @@
-BASHRC='/home/ubuntu/.bashrc'
+#!/bin/sh -x
 
-echo export CDK_DEFAULT_REGION=$CDK_DEFAULT_REGION >> $BASHRC
-echo export INF1TYPE=inf1.xlarge >> $BASHRC
+HOME=/home/ubuntu
+
+cd $HOME
 
 # Please see the neuron docs
 #   https://awsdocs-neuron.readthedocs-hosted.com/en/latest/neuron-intro/pytorch-setup/pytorch-install.html
@@ -10,11 +11,11 @@ sudo apt-get install linux-headers-$(uname -r) -y
 sudo apt-get install aws-neuron-dkms --allow-change-held-packages -y
 sudo apt-get install aws-neuron-tools -y
 
-echo export PATH=/opt/aws/neuron/bin:$PATH >> $BASHRC
-echo export PATH=~/anaconda3/bin:$PATH >> $BASHRC
+export PATH=/opt/aws/neuron/bin:$PATH
 
 sudo apt-get install -y python3.7-venv g++
 python3.7 -m venv pytorch_venv
+source pytorch_venv/bin/activate
 pip install -U pip
 pip install ipykernel 
 pip install jupyter notebook
