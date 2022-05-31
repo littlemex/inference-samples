@@ -63,7 +63,13 @@ export class Ec2Stack extends Stack {
       machineImage: ami,
       securityGroup: securityGroup,
       keyName: key.keyPairName,
-      role: role
+      role: role,
+      blockDevices: [
+        {
+          deviceName: '/dev/sda1',
+          volume: ec2.BlockDeviceVolume.ebs(300),
+        },
+      ],
     });
 
     const asset = new Asset(this, 'Asset', { path: path.join(__dirname, '../src/config.sh') });

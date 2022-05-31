@@ -21,4 +21,4 @@ pip install ipykernel
 pip install jupyter notebook
 pip install environment_kernels
 pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
-pip install torch-neuron neuron-cc[tensorflow] torchvision
+pip install torch-neuron==1.10.2.* neuron-cc[tensorflow] "protobuf<4" torchvision
