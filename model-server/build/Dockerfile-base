@@ -25,9 +25,9 @@ RUN yum install -y python3.7 python3.7-devel gcc-c++ \
                    tar gzip ca-certificates procps net-tools which vim wget libgomp htop jq bind-utils bc
 
 #Install Neuron PyTorch
-RUN pip3 install torch-neuron neuron-cc[tensorflow] torchvision --extra-index-url=https://pip.repos.neuron.amazonaws.com
+RUN pip3 install torch-neuron neuron-cc[tensorflow] "protobuf<4" torchvision --extra-index-url=https://pip.repos.neuron.amazonaws.com
 
-RUN pip3 install transformers fugashi ipadic
+RUN pip3 install transformers==4.19.2 fugashi==1.1.2 ipadic==1.0.0
 
 # For Trace ---------------------------------------
 FROM inf1-base as trace-stage
