@@ -12,12 +12,9 @@ model = BertForMaskedLM.from_pretrained(model_name, return_dict=False)
 model.eval()
 tokenizer = BertJapaneseTokenizer.from_pretrained(model_name)
 
-text = "私は東京へ行く"
+text = "お爺さんは森に狩りへ出かける"
 inputs = tokenizer.encode_plus(
-    text, return_tensors="pt",
-    max_length=LENGTH,
-    padding="max_length",
-    truncation=True
+    text, return_tensors="pt", max_length=LENGTH, padding="max_length", truncation=True
 )
 
 example_inputs = (

@@ -30,8 +30,6 @@ class ModelInference:
         self.model = torch.jit.load(model_path)
 
     def _conv_to_tokens_from_(self, index):
-        print("item", index.item())
-        print(self.tokenizer.convert_ids_to_tokens(index.item()))
         return self.tokenizer.convert_ids_to_tokens([index.item()])[0]
 
     def infer(self, message):
@@ -51,10 +49,7 @@ class ModelInference:
             padding="max_length",
             truncation=True,
         )
-        model_input = (
-            encoding["input_ids"],
-            encoding["attention_mask"]
-        )
+        model_input = (encoding["input_ids"], encoding["attention_mask"])
         with torch.no_grad():
             outputs = self.model(*model_input)
             preds = outputs[0][0, mask_index].topk(5)
@@ -88,6 +83,6 @@ async def inferences(message: UserRequestIn):
 
 
 if __name__ == "__main__":
-    request = {"text": "私は東京へ行く", "mask_index": 2}
+    request = {"text": "お爺さんは森に狩りへ出かける", "mask_index": 7}
     message = UserRequestIn(**request)
     print(model_class.predict(message))
