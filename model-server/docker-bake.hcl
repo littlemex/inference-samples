@@ -1,17 +1,17 @@
 target "base" {
   target = "base-stage"
   dockerfile = "build/Dockerfile-base"
-  tags = ["inf1-base"]
+  tags = ["base"]
 }
 
 target "trace" {
   target = "trace-stage"
   inherits = ["base"]
-  tags = ["inf1-trace"]
+  tags = ["trace"]
 }
 
 target "model" {
   target = "model-stage"
   inherits = ["base"]
-  tags = ["inf1-model"]
+  tags = ["model"]
 }
