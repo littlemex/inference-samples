@@ -2,7 +2,7 @@ target "base" {
   target = "base-stage"
   dockerfile = "build/Dockerfile"
   args = {
-      REGION = "${CDK_DEFAULT_REGION}"
+      REGION = "${REGION}"
   }
   tags = ["base"]
 }
