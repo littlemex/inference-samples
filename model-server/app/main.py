@@ -5,7 +5,7 @@ from typing import List
 
 import torch
 import torch_neuron
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, constr
 from transformers import BertJapaneseTokenizer
 
@@ -71,14 +71,20 @@ class MaskedTextOut(BaseModel):
 model_class = ModelInference()
 
 
-@app.get("/")
-async def read_root():
+@app.head("/", status_code=200)
+@app.get("/", status_code=200)
+def read_root():
     return {"Status": "Healthy"}
 
 
-@app.post("/inferences", response_model=MaskedTextOut)
-async def inferences(message: UserRequestIn):
-    infered = model_class.infer(message)
+@app.post("/inferences", response_model=MaskedTextOut, status_code=200)
+def inferences(message: UserRequestIn):
+    try:
+        infered = model_class.infer(message)
+    except Exception as e:
+        msg = f"Internal Server Error, {e}"
+        raise HTTPException(status_code=500, detail=msg)
+
     return {"labels": infered}
 
 
