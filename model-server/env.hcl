@@ -1,0 +1,3 @@
+CDK_DEFAULT_REGION="ap-northeast-1"
+REGION="ap-northeast-1"
+ACCOUNT_ID="067150986393"

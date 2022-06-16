@@ -28,3 +28,5 @@ else:
     model_traced = torch.jit.trace(model, example_inputs)
 
 model_traced.save(ptname)
+
+print("Done.")
