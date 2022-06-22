@@ -34,6 +34,7 @@ cat <<'EOL' > /home/ubuntu/.aws/credentials
 [default]
 aws_access_key_id = xx
 aws_secret_access_key = xx
+region = xx
 EOL
 
 cat <<'EOL' > /tmp/env.hcl
