@@ -24,6 +24,7 @@ RUN mkdir -p /app/server
 
 COPY ./app/requirements.txt /app/server/requirements.txt
 COPY ./trace/transformers_neuron.pt /app/server/models/transformers_neuron.pt
+COPY ./trace/tokenizer /app/server/models/tokenizer
 COPY ./app/run.sh /app/server/run.sh
 COPY ./app/main.py /app/server/main.py
 

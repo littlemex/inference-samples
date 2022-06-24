@@ -5,12 +5,13 @@ from transformers import BertForMaskedLM, BertJapaneseTokenizer
 model_name = "cl-tohoku/bert-base-japanese-whole-word-masking"
 ptname = "transformers_neuron.pt"
 processor = "inf1"
-
 LENGTH = 512
 
 model = BertForMaskedLM.from_pretrained(model_name, return_dict=False)
+
 model.eval()
 tokenizer = BertJapaneseTokenizer.from_pretrained(model_name)
+tokenizer.save_pretrained("./tokenizer")
 
 text = "お爺さんは森に狩りへ出かける"
 inputs = tokenizer.encode_plus(

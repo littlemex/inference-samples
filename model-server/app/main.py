@@ -19,14 +19,14 @@ logger.setLevel(DEBUG)
 
 path_prefix = "/app/server/models/"
 model_path = os.path.join(path_prefix, "transformers_neuron.pt")
+tokenizer_path = os.path.join(path_prefix, "tokenizer")
 
 LENGTH = 512
 
 
 class ModelInference:
     def __init__(self):
-        pretrained = "cl-tohoku/bert-base-japanese-whole-word-masking"
-        self.tokenizer = BertJapaneseTokenizer.from_pretrained(pretrained)
+        self.tokenizer = BertJapaneseTokenizer.from_pretrained(tokenizer_path)
         self.model = torch.jit.load(model_path)
 
     def _conv_to_tokens_from_(self, index):

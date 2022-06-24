@@ -73,3 +73,6 @@ poetry.lock
 
 # transformers
 *.pt
+
+
+trace/tokenizer
