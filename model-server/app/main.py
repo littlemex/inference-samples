@@ -17,9 +17,9 @@ handler.setLevel(DEBUG)
 logger.addHandler(handler)
 logger.setLevel(DEBUG)
 
-path_prefix = "/app/server/models/"
-model_path = os.path.join(path_prefix, "transformers_neuron.pt")
-tokenizer_path = os.path.join(path_prefix, "tokenizer")
+PATH_PREFIX = os.getenv("PATH_PREFIX", "/app/server/models/")
+model_path = os.path.join(PATH_PREFIX, "transformers_neuron.pt")
+tokenizer_path = os.path.join(PATH_PREFIX, "tokenizer")
 
 LENGTH = 512
 
@@ -91,4 +91,4 @@ def inferences(message: UserRequestIn):
 if __name__ == "__main__":
     request = {"text": "お爺さんは森に狩りへ出かける", "mask_index": 7}
     message = UserRequestIn(**request)
-    print(model_class.predict(message))
+    print(model_class.infer(message))
