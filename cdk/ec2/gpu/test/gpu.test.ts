@@ -1,11 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
-import * as Ec2 from '../lib/ec2-stack';
+import * as Ec2 from '../lib/gpu-stack';
 
 test('SQS Queue and SNS Topic Created', () => {
   const app = new cdk.App();
   // WHEN
-  const stack = new Ec2.Ec2Stack(app, 'MyTestStack');
+  const stack = new Ec2.GpuStack(app, 'MyTestStack');
   // THEN
 
   const template = Template.fromStack(stack);

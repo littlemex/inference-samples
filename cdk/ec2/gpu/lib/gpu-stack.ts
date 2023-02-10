@@ -8,15 +8,16 @@ import { Construct } from "constructs";
 import { KeyPair } from "cdk-ec2-key-pair";
 
 
-export class Ec2Stack extends Stack {
+export class GpuStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const region: string = process.env.CDK_DEFAULT_REGION || "ap-northeast-1";
-    const imageId: string = "ami-0eeb79c0bc2f4ed75"; // for ap-northeast-1
+    const region: string = process.env.CDK_DEFAULT_REGION || "us-east-1";
+    const imageId: string = process.env.CDK_DEFAULT_AMI || "ami-0dc2e3e2f9cca7c15";
+    const projectName: string = process.env.CDK_DEFAULT_PROJECT_NAME || "id00000";
 
     const key = new KeyPair(this, "KeyPair", {
-      name: "cdk-keypair",
+      name: "cdk-keypair-"+projectName,
       description: "Key Pair created with CDK Deployment",
       storePublicKey: true,
     });
@@ -54,9 +55,9 @@ export class Ec2Stack extends Stack {
       [region]: imageId,
     });
 
-    const ec2Inf1Instance = new ec2.Instance(this, "Inf1Instance", {
+    const ec2GpuInstance = new ec2.Instance(this, "GpuInstance", {
       vpc,
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.INFERENCE1, ec2.InstanceSize.XLARGE),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
       machineImage: ami,
       securityGroup: securityGroup,
       keyName: key.keyPairName,
@@ -70,20 +71,21 @@ export class Ec2Stack extends Stack {
     });
 
     const asset = new Asset(this, "Asset", { path: path.join(__dirname, "../src/config.sh") });
-    const localPath = ec2Inf1Instance.userData.addS3DownloadCommand({
+    const localPath = ec2GpuInstance.userData.addS3DownloadCommand({
       bucket: asset.bucket,
       bucketKey: asset.s3ObjectKey,
     });
 
-    ec2Inf1Instance.userData.addExecuteFileCommand({
+    ec2GpuInstance.userData.addExecuteFileCommand({
       filePath: localPath,
       arguments: "--verbose -y"
     });
-    asset.grantRead(ec2Inf1Instance.role);
+    asset.grantRead(ec2GpuInstance.role);
 
-    new cdk.CfnOutput(this, "EC2 IP Address", { value: ec2Inf1Instance.instancePublicIp });
+    new cdk.CfnOutput(this, "EC2 IP Address", { value: ec2GpuInstance.instancePublicIp });
     new cdk.CfnOutput(this, "Key Name", { value: key.keyPairName })
-    new cdk.CfnOutput(this, "Download Key Command", { value: "aws secretsmanager get-secret-value --secret-id ec2-ssh-key/cdk-keypair/private --query SecretString --output text > ~/.ssh/cdk-keypair.pem && chmod 400 ~/.ssh/cdk-keypair.pem" })
-    new cdk.CfnOutput(this, "SSH Command", { value: "ssh -i ~/.ssh/cdk-keypair.pem -o IdentitiesOnly=yes ubuntu@" + ec2Inf1Instance.instancePublicIp })
+    new cdk.CfnOutput(this, "Download Key Command", { value: "aws secretsmanager get-secret-value --secret-id ec2-ssh-key/cdk-keypair-"+projectName+"/private --query SecretString --output text > ~/.ssh/cdk-keypair-"+projectName+".pem && chmod 400 ~/.ssh/cdk-keypair-"+projectName+".pem" })
+    new cdk.CfnOutput(this, "Ubuntu SSH Command", { value: "ssh -i ~/.ssh/cdk-keypair-"+projectName+".pem -o IdentitiesOnly=yes ubuntu@" + ec2GpuInstance.instancePublicIp })
+    new cdk.CfnOutput(this, "Amazon Linux2 SSH Command", { value: "ssh -i ~/.ssh/cdk-keypair-"+projectName+".pem -o IdentitiesOnly=yes ec2-user@" + ec2GpuInstance.instancePublicIp })
   }    
 }
