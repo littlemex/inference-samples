@@ -23,11 +23,35 @@ tokenizer_path = os.path.join(PATH_PREFIX, "tokenizer")
 
 LENGTH = 512
 
+# このロジックはベタ書きじゃなくてなんらか綺麗にしたい
+processor='gpu'
+device_type='cpu'
+try:
+    import torch_neuron
+    device_type='inf'
+except ImportError: 
+    print('[WARN] Torch Neuron not Found') 
+    pass
+
+if device_type != 'inf':
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        device_type = "gpu"
+    else:
+        device = torch.device("cpu")
+        device_type = 'cpu'
+
+if device_type == processor:
+    print(f"   ... Using device: {device_type}")
+else:
+    print(f"[WARN] detected device_type ({device_type}) does not match the configured processor ({processor})")
+
 
 class ModelInference:
     def __init__(self):
         self.tokenizer = BertJapaneseTokenizer.from_pretrained(tokenizer_path)
         self.model = torch.jit.load(model_path)
+        self.model.to(device)
 
     def _conv_to_tokens_from_(self, index):
         return self.tokenizer.convert_ids_to_tokens([index.item()])[0]
