@@ -1,5 +1,5 @@
 ARG REGION
-FROM 763104351884.dkr.ecr.${REGION:-ap-northeast-1}.amazonaws.com/pytorch-inference-neuron:1.10.2-neuron-py37-sdk1.19.0-ubuntu18.04 as base-stage
+FROM 763104351884.dkr.ecr.${REGION:-us-west-1}.amazonaws.com/pytorch-inference:1.13.1-gpu-py39-cu117-ubuntu20.04-ec2 as base-stage
 
 ENV PYTHONUNBUFFERED=TRUE
 ENV PYTHONDONTWRITEBYTECODE=TRUE
@@ -23,7 +23,7 @@ FROM base as model-stage
 RUN mkdir -p /app/server
 
 COPY ./app/requirements.txt /app/server/requirements.txt
-COPY ./trace/transformers_neuron.pt /app/server/models/transformers_neuron.pt
+COPY ./trace/transformers.pt /app/server/models/transformers.pt
 COPY ./trace/tokenizer /app/server/models/tokenizer
 COPY ./app/run.sh /app/server/run.sh
 COPY ./app/main.py /app/server/main.py

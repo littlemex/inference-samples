@@ -4,7 +4,6 @@ from logging import DEBUG, StreamHandler, getLogger
 from typing import List
 
 import torch
-import torch_neuron
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, constr
 from transformers import BertJapaneseTokenizer
@@ -18,7 +17,7 @@ logger.addHandler(handler)
 logger.setLevel(DEBUG)
 
 PATH_PREFIX = os.getenv("PATH_PREFIX", "/app/server/models/")
-model_path = os.path.join(PATH_PREFIX, "transformers_neuron.pt")
+model_path = os.path.join(PATH_PREFIX, "transformers.pt")
 tokenizer_path = os.path.join(PATH_PREFIX, "tokenizer")
 
 LENGTH = 512

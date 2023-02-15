@@ -1,10 +1,9 @@
 import torch
-import torch_neuron
 from transformers import BertForMaskedLM, BertJapaneseTokenizer
 
 model_name = "cl-tohoku/bert-base-japanese-whole-word-masking"
-ptname = "transformers_neuron.pt"
-processor = "inf1"
+ptname = "transformers.pt"
+processor = "gpu"
 LENGTH = 512
 
 model = BertForMaskedLM.from_pretrained(model_name, return_dict=False)
