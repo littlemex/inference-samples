@@ -14,6 +14,7 @@ export class EcsStack extends Stack {
 
     const region: string = process.env.CDK_DEFAULT_REGION || "ap-northeast-1";
     const modeRepoName: string = "model";
+    const webRepoName: string = "web";
     const healthCheckPath: string = "/";
     // https://docs.amazonaws.cn/en_us/AmazonECS/latest/developerguide/ecs-inference.html#ecs-inference-requirements
     const imageID: string = "ami-07fd409cba79d3a25"; // for ap-northeast-1
@@ -54,31 +55,35 @@ export class EcsStack extends Stack {
       vpc,
       instanceType: instanceType,
       machineImage: new ec2.GenericLinuxImage({
-        [region]: imageID,
+        [`${region}`]: imageID,
       }),
-      securityGroup: securityGroup,
+      minCapacity: 1,
+      maxCapacity: 2,
     });
 
     const capacityProvider = new ecs.AsgCapacityProvider(this, "CapacityProvider", {
       autoScalingGroup: autoScalingGroup,
       capacityProviderName: "capacity-provider",
-      // https://github.com/aws/aws-cdk/issues/14732
+      enableManagedScaling: true,
+      targetCapacityPercent: 100,
       enableManagedTerminationProtection: false,
     });
     cluster.addAsgCapacityProvider(capacityProvider);
 
-    const logging = new ecs.AwsLogDriver({ streamPrefix: "model-server" });
+    const modelLogging = new ecs.AwsLogDriver({ streamPrefix: "model-server" });
+    const webLogging = new ecs.AwsLogDriver({ streamPrefix: "web-server" });
 
-    const image = ecs.ContainerImage.fromEcrRepository(
+    const modelImage = ecs.ContainerImage.fromEcrRepository(
       ecr.Repository.fromRepositoryName(this, "ModelImage", modeRepoName),
     );
+    const webImage = ecs.ContainerImage.fromEcrRepository(
+      ecr.Repository.fromRepositoryName(this, "webImage", webRepoName),
+    );
 
-    const taskDefinition = new ecs.Ec2TaskDefinition(this, "TaskDef");
-    const linuxParameters = new ecs.LinuxParameters(this, 'LinuxParameters', {
-      initProcessEnabled: false,
-      sharedMemorySize: 123,
-
+    const taskDefinition = new ecs.Ec2TaskDefinition(this, "TaskDef", {
+      networkMode: ecs.NetworkMode.AWS_VPC,
     });
+    const linuxParameters = new ecs.LinuxParameters(this, 'LinuxParameters');
     linuxParameters.addDevices({
       containerPath: "/dev/neuron0",
       hostPath: "/dev/neuron0",
@@ -86,43 +91,71 @@ export class EcsStack extends Stack {
     });
     linuxParameters.addCapabilities(ecs.Capability.IPC_LOCK);
 
-    const container = taskDefinition.addContainer("web", {
+    const modelContainer = taskDefinition.addContainer("model", {
       // https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-ecs.ContainerDefinitionOptions.html
-      image: image,
+      image: modelImage,
       memoryLimitMiB: 2048,
       cpu: 0,
       essential: true,
-      logging,
+      logging: modelLogging,
       environment: {
         ECS_IMAGE_PULL_BEHAVIOR: "default",
+        PORT: "8080",
+        VERSION: "1"
       },
       memoryReservationMiB: 1000,
       linuxParameters: linuxParameters,
     });
 
-    container.addPortMappings({
+    const webContainer = taskDefinition.addContainer("web", {
+      // https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-ecs.ContainerDefinitionOptions.html
+      image: webImage,
+      memoryLimitMiB: 2048,
+      cpu: 0,
+      essential: true,
+      logging: webLogging,
+      environment: {
+        ECS_IMAGE_PULL_BEHAVIOR: "default",
+        ENDPOINT_URL: "http://localhost:8080/inferences",
+        VERSION: "1"
+      },
+      memoryReservationMiB: 1000,
+    });
+
+    webContainer.addPortMappings({
       containerPort: 80,
+      hostPort: 80,
+      protocol: ecs.Protocol.TCP
+    });
+
+    modelContainer.addPortMappings({
+      containerPort: 8080,
       hostPort: 8080,
       protocol: ecs.Protocol.TCP
     });
 
+    taskDefinition.defaultContainer = webContainer
+
     const service = new ecs.Ec2Service(this, "Service", {
-      cluster,
-      taskDefinition,
+      cluster: cluster,
+      taskDefinition: taskDefinition,
+      capacityProviderStrategies: [
+        { capacityProvider: capacityProvider.capacityProviderName, weight: 1 }
+      ],
       maxHealthyPercent: 200,
       minHealthyPercent: 100,
     });
 
-    service.addPlacementStrategies(
-      ecs.PlacementStrategy.packedBy(ecs.BinPackResource.MEMORY),
-      ecs.PlacementStrategy.spreadAcross(ecs.BuiltInAttributes.AVAILABILITY_ZONE));
+    service.addPlacementConstraints(
+      ecs.PlacementConstraint.distinctInstances(),
+    )
 
     const lb = new elbv2.ApplicationLoadBalancer(this, "LB", {
       vpc,
       internetFacing: true,
       securityGroup: securityGroup,
     });
-    const listener = lb.addListener("PublicListener", { port: 80, open: true });
+    const listener = lb.addListener("PublicListener", {port: 80, open: true});
 
     listener.addTargets("ECS", {
       port: 80,
