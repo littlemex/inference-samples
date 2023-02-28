@@ -1,0 +1,44 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-image-service
+  labels:
+    app: my-image-service
+spec:
+  ports:
+  - port: 80
+    targetPort: mms2
+  selector:
+    app: my-image-service
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: my-image-service
+  labels:
+    app: my-image-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-image-service
+  template:
+    metadata:
+      labels:
+        app: my-image-service
+    spec:
+      containers:
+      - name: my-image-service
+        image: "XXXX.dkr.ecr.us-east-1.amazonaws.com/model:v002" # ECR においているイメージに変更
+#        args:
+#        - --models densenet=https://dlc-samples.s3.amazonaws.com/pytorch/multi-model-server/densenet/densenet.mar
+        ports:
+        - name: mms2
+          containerPort: 80
+#        - name: mms-management
+#          containerPort: 8081
+        imagePullPolicy: Always
+        resources:
+          limits:
+            nvidia.com/gpu: 1

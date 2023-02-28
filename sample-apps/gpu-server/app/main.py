@@ -33,8 +33,9 @@ except ImportError:
     pass
 
 if device_type != 'inf':
+    print("cuda is available:", torch.cuda.is_available())
     if torch.cuda.is_available():
-        device = torch.device("cuda")
+        device = torch.device("cuda:0")
         device_type = "gpu"
     else:
         device = torch.device("cpu")
@@ -50,7 +51,9 @@ class ModelInference:
     def __init__(self):
         self.tokenizer = BertJapaneseTokenizer.from_pretrained(tokenizer_path)
         self.model = torch.jit.load(model_path)
-        self.model.to(device)
+        print("device type: ", device_type)
+        if device_type == 'gpu':
+            self.model.to(device)
 
     def _conv_to_tokens_from_(self, index):
         return self.tokenizer.convert_ids_to_tokens([index.item()])[0]
@@ -72,6 +75,8 @@ class ModelInference:
             padding="max_length",
             truncation=True,
         )
+        if device_type == 'gpu':
+            encoding.to(device)
         model_input = (encoding["input_ids"], encoding["attention_mask"])
         with torch.no_grad():
             outputs = self.model(*model_input)

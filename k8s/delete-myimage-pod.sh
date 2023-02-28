@@ -1,0 +1,1 @@
+NAMESPACE=pt-inference; kubectl -n ${NAMESPACE} delete -f pt_myimage_inference.yaml
