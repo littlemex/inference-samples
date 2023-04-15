@@ -7,6 +7,9 @@ export CDK_DEFAULT_REGION=us-east-1
 export CDK_DEFAULT_ACCOUNT=(AWS Account ID)
 export CDK_DEFAULT_AMI=(AMI ID) # Note that the AMI ID is different for each region
 export CDK_DEFAULT_PROJECT_NAME=id00000
+export CDK_DEFAULT_INSTANCE_CLASS=g4dn
+export CDK_DEFAULT_INSTANCE_SIZE=xlarge4
+export CDK_DEFAULT_VOL_SIZE=500
 
 npx cdk bootstrap # If needed.
 npx cdk deploy

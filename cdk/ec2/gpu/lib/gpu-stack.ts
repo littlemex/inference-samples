@@ -16,6 +16,24 @@ export class GpuStack extends Stack {
     const imageId: string = process.env.CDK_DEFAULT_AMI || "ami-0dc2e3e2f9cca7c15";
     const projectName: string = process.env.CDK_DEFAULT_PROJECT_NAME || "id00000";
 
+    const volSize = process.env.CDK_DEFAULT_VOL_SIZE !== undefined
+      ? parseInt(process.env.CDK_DEFAULT_VOL_SIZE, 10)
+      : 500;
+
+    const instanceClassString: string = process.env.CDK_DEFAULT_INSTANCE_CLASS || "g4dn";
+    const instanceClass = Object.values(ec2.InstanceClass).find(
+      //(key) => ec2.InstanceClass[key as keyof typeof ec2.InstanceClass] === instanceClassString
+      (value) => value === instanceClassString
+    ) || ec2.InstanceClass.G4DN;
+    console.log("instanceClass", instanceClass)
+    
+    const instanceSizeString: string = process.env.CDK_DEFAULT_INSTANCE_SIZE || "xlarge";
+    const instanceSize = Object.values(ec2.InstanceSize).find(
+      //(key) => ec2.InstanceSize[key as keyof typeof ec2.InstanceSize] === instanceSizeString
+      (value) => value === instanceSizeString
+    ) || ec2.InstanceSize.XLARGE;
+    console.log("instanceSize", instanceSize)
+
     const key = new KeyPair(this, "KeyPair", {
       name: "cdk-keypair-"+projectName,
       description: "Key Pair created with CDK Deployment",
@@ -57,7 +75,7 @@ export class GpuStack extends Stack {
 
     const ec2GpuInstance = new ec2.Instance(this, "GpuInstance", {
       vpc,
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
+      instanceType: ec2.InstanceType.of(instanceClass, instanceSize),
       machineImage: ami,
       securityGroup: securityGroup,
       keyName: key.keyPairName,
@@ -65,7 +83,7 @@ export class GpuStack extends Stack {
       blockDevices: [
         {
           deviceName: "/dev/sda1",
-          volume: ec2.BlockDeviceVolume.ebs(300),
+          volume: ec2.BlockDeviceVolume.ebs(volSize),
         },
       ],
     });
