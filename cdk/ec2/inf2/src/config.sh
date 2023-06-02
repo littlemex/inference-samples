@@ -21,7 +21,7 @@ sudo apt-get install -y python3.8-venv g++
 . ./aws_neuron_venv_pytorch/bin/activate # Ubuntu 20 DLAMI Pytorch
 /usr/bin/python3.8 -m pip install -U pip 
 
-pip install ipykernel 
+/usr/bin/python3.8 -m pip install ipykernel 
 /usr/bin/python3.8 -m ipykernel install --user --name aws_neuron_venv_pytorch --display-name "Python (torch-neuronx)"
 pip install jupyter notebook
 pip install environment_kernels
