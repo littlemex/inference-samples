@@ -14,6 +14,8 @@ export class EC2Stack extends Stack {
 
     const region: string = process.env.CDK_DEFAULT_REGION || "us-east-1";
     const imageId: string = process.env.CDK_DEFAULT_AMI || "ami-0dc2e3e2f9cca7c15";
+    type Az = string | undefined;
+    const az: Az = process.env.CDK_DEFAULT_AZ || undefined;
     const projectName: string = process.env.CDK_DEFAULT_PROJECT_NAME || "id00000";
 
     const volSize = process.env.CDK_DEFAULT_VOL_SIZE !== undefined
@@ -25,14 +27,23 @@ export class EC2Stack extends Stack {
       //(key) => ec2.InstanceClass[key as keyof typeof ec2.InstanceClass] === instanceClassString
       (value) => value === instanceClassString
     ) || ec2.InstanceClass.G4DN;
-    console.log("instanceClass", instanceClass)
     
     const instanceSizeString: string = process.env.CDK_DEFAULT_INSTANCE_SIZE || "xlarge";
     const instanceSize = Object.values(ec2.InstanceSize).find(
       //(key) => ec2.InstanceSize[key as keyof typeof ec2.InstanceSize] === instanceSizeString
       (value) => value === instanceSizeString
     ) || ec2.InstanceSize.XLARGE;
-    console.log("instanceSize", instanceSize)
+
+    //workaround: ec2.InstanceClass で enum 使うのやめろ・・、enum に追記できないから union 使ってほしい
+    let instancetype: ec2.InstanceType;
+    if (instanceClassString == 'trn1' || instanceClassString == 'trainium1' ) {
+      const instancetypestr: string = `trn1.${instanceSize}`;
+      console.log("instancetype:", instancetypestr);
+      instancetype = new ec2.InstanceType(instancetypestr);
+    } else {
+      instancetype = ec2.InstanceType.of(instanceClass, instanceSize);
+      console.log("instancetype:", `${instanceClass}.${instanceSize}`);
+    }
 
     const key = new KeyPair(this, "KeyPair", {
       name: "cdk-keypair-"+projectName,
@@ -75,10 +86,11 @@ export class EC2Stack extends Stack {
 
     const ec2GpuInstance = new ec2.Instance(this, "GpuInstance", {
       vpc,
-      instanceType: ec2.InstanceType.of(instanceClass, instanceSize),
+      instanceType: instancetype,
       machineImage: ami,
       securityGroup: securityGroup,
       keyName: key.keyPairName,
+      availabilityZone: az,
       role: role,
       blockDevices: [
         {
@@ -107,3 +119,7 @@ export class EC2Stack extends Stack {
     new cdk.CfnOutput(this, "Amazon Linux2 SSH Command", { value: "ssh -i ~/.ssh/cdk-keypair-"+projectName+".pem -o IdentitiesOnly=yes ec2-user@" + ec2GpuInstance.instancePublicIp })
   }    
 }
+function indexOf(arg0: ec2.InstanceClass[]) {
+  throw new Error("Function not implemented.");
+}
+
