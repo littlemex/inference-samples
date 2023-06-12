@@ -24,7 +24,6 @@ inputs = tokenizer(
 
 inputs_tuple = (inputs['input_ids'], inputs['attention_mask'])
 if "inf1" in processor:
-    print(333334)
     model_traced = torch.neuron.trace(model, inputs_tuple, strict=False)
 else:
     model_traced = torch.jit.trace(model, inputs_tuple, strict=False)
