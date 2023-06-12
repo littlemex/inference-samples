@@ -7,7 +7,7 @@ import torch
 import torch_neuron
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, constr
-from transformers import BertJapaneseTokenizer
+from transformers import AutoTokenizer
 
 app = FastAPI()
 
@@ -26,46 +26,37 @@ LENGTH = 512
 
 class ModelInference:
     def __init__(self):
-        self.tokenizer = BertJapaneseTokenizer.from_pretrained(tokenizer_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         self.model = torch.jit.load(model_path)
-
-    def _conv_to_tokens_from_(self, index):
-        return self.tokenizer.convert_ids_to_tokens([index.item()])[0]
 
     def infer(self, message):
 
-        text = message.text
-        mask_index = message.mask_index
+        question = message.question
+        context = message.context
 
-        logger.info(f"Input text : {text}")
-        tokenized_text = self.tokenizer.tokenize(text)
-        logger.info("Tokenized text : " + ",".join(tokenized_text))
-        tokenized_text[mask_index] = "[MASK]"
-        logger.info("Masked text : " + ",".join(tokenized_text))
-        encoding = self.tokenizer.encode_plus(
-            text,
-            return_tensors="pt",
-            max_length=LENGTH,
-            padding="max_length",
-            truncation=True,
-        )
-        model_input = (encoding["input_ids"], encoding["attention_mask"])
+        logger.info(f"Input question : {question}, context : {context}")
+        inputs = self.tokenizer(
+            question, context, add_special_tokens=True, return_tensors="pt", max_length=LENGTH, padding='max_length', truncation=True)
+        inputs_tuple = (inputs["input_ids"], inputs["attention_mask"])
+
         with torch.no_grad():
-            outputs = self.model(*model_input)
-            preds = outputs[0][0, mask_index].topk(5)
+            outputs = self.model(*inputs_tuple)
+            answer_start_scores, answer_end_scores = outputs
+        answer_start = torch.argmax(answer_start_scores)
+        answer_end = torch.argmax(answer_end_scores) + 1
+        answer = self.tokenizer.convert_tokens_to_string(
+            self.tokenizer.convert_ids_to_tokens(inputs["input_ids"][0][answer_start:answer_end]))
 
-        tokens = [self._conv_to_tokens_from_(idx) for idx in preds.indices]
-
-        return tokens
+        return answer
 
 
 class UserRequestIn(BaseModel):
-    text: constr(min_length=1)
-    mask_index: int
+    question: constr(min_length=1)
+    context: constr(min_length=1)
 
 
-class MaskedTextOut(BaseModel):
-    labels: List[str]
+class TextOut(BaseModel):
+    answer: str
 
 
 model_class = ModelInference()
@@ -77,7 +68,7 @@ def read_root():
     return {"Status": "Healthy"}
 
 
-@app.post("/inferences", response_model=MaskedTextOut, status_code=200)
+@app.post("/inferences", response_model=TextOut, status_code=200)
 def inferences(message: UserRequestIn):
     try:
         infered = model_class.infer(message)
@@ -85,10 +76,13 @@ def inferences(message: UserRequestIn):
         msg = f"Internal Server Error, {e}"
         raise HTTPException(status_code=500, detail=msg)
 
-    return {"labels": infered}
+    return {"answer": infered}
 
 
 if __name__ == "__main__":
-    request = {"text": "お爺さんは森に狩りへ出かける", "mask_index": 7}
+    request = {
+            "question": "アレクサンダー・グラハム・ベルは、どこで生まれたの?",
+            "context": "アレクサンダー・グラハム・ベルは、スコットランド生まれの科学者、発明家、工学者である。世界初の実用的電話の発明で知られている。",
+            }
     message = UserRequestIn(**request)
     print(model_class.infer(message))
