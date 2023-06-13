@@ -3,6 +3,8 @@ target "base" {
   dockerfile = "build/Dockerfile"
   args = {
       REGION = "${REGION}"
+      IMAGEPATH = "${IMAGEPATH}"
+      INSTANCE_TYPE = "${INSTANCE_TYPE}"
   }
   tags = ["base"]
 }

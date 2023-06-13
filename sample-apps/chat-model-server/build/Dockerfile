@@ -1,18 +1,28 @@
 ARG REGION
-#FROM 763104351884.dkr.ecr.${REGION:-ap-northeast-1}.amazonaws.com/huggingface-pytorch-inference-neuron:1.10.2-transformers4.20.1-neuron-py37-sdk1.19.1-ubuntu18.04 as base-stage
-FROM 763104351884.dkr.ecr.${REGION:-ap-northeast-1}.amazonaws.com/pytorch-inference-neuron:1.13.1-neuron-py38-sdk2.10.0-ubuntu20.04 as base-stage
+ARG IMAGEPATH
+ARG INSTANCE_TYPE
+FROM 763104351884.dkr.ecr.${REGION:-ap-northeast-1}.amazonaws.com/${IMAGEPATH} AS base-stage
 
 ENV PYTHONUNBUFFERED=TRUE
 ENV PYTHONDONTWRITEBYTECODE=TRUE
 ENV AWS_NEURON_VISIBLE_DEVICES=ALL
 ENV PATH=/opt/aws/neuron/bin:$PATH
 
-RUN pip install transformers==4.18.0
 RUN pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
-RUN pip install torch-neuron neuron-cc[tensorflow] "protobuf" torchvision
+
 
 # For Trace ---------------------------------------
-FROM base as trace-stage
+ARG INSTANCE_TYPE
+FROM base-stage AS trace-inf1-stage
+ONBUILD ADD ./trace/requirements_inf1.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements_inf1.txt
+
+FROM base-stage AS trace-inf2-stage
+ONBUILD ADD ./trace/requirements_inf2.txt /tmp/requirements.txt
+
+FROM trace-${INSTANCE_TYPE}-stage AS trace-stage
+
+RUN pip install -r /tmp/requirements.txt
 
 RUN mkdir -p /app/trace/models
 
@@ -21,7 +31,7 @@ ADD ./trace/tracer.py /app/trace
 WORKDIR /app/trace/
 
 # For Model Server --------------------------------
-FROM base as model-stage
+FROM base AS model-stage
 
 RUN mkdir -p /app/server
 

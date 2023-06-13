@@ -1,9 +1,20 @@
 import torch
-import torch_neuron
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 
 import os
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+instance_type = os.environ['INSTANCE_TYPE']
+print(instance_type)
+
+if instance_type == 'inf1':
+    import torch_neuron
+    torch_jit = torch.neuron
+elif instance_type == 'inf2' or instance_type == 'trn1':
+    import torch_neuronx
+    torch_jit = torch_neuronx
+else:
+    torch_jit = torch.jit
+
 
 model_name = "ybelkada/japanese-roberta-question-answering"
 ptname = "transformers_neuron.pt"
@@ -23,11 +34,7 @@ inputs = tokenizer(
 
 
 inputs_tuple = (inputs['input_ids'], inputs['attention_mask'])
-if "inf1" in processor:
-    model_traced = torch.neuron.trace(model, inputs_tuple, strict=False)
-else:
-    model_traced = torch.jit.trace(model, inputs_tuple, strict=False)
-
+model_traced = torch_jit.trace(model, inputs_tuple, strict=False)
 model_traced.save(ptname)
 
 print("Done.")

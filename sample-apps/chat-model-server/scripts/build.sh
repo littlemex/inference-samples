@@ -6,4 +6,4 @@ aws ecr get-login-password --region $REGION | docker login --username AWS --pass
 docker buildx bake base -f docker-bake.hcl -f $ENVHCL
 docker buildx bake trace -f docker-bake.hcl -f $ENVHCL
 
-cd  -
+cd -

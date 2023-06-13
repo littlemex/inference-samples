@@ -1,0 +1,4 @@
+transformers==4.18.0
+neuronx-cc==2.*
+torch-neuronx
+torchvision
