@@ -1,3 +1,4 @@
+import re
 import torch
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 
@@ -34,7 +35,7 @@ inputs = tokenizer(
 
 
 inputs_tuple = (inputs['input_ids'], inputs['attention_mask'])
-model_traced = torch_jit.trace(model, inputs_tuple, strict=False)
+model_traced = torch_jit.trace(model, inputs_tuple)
 model_traced.save(ptname)
 
 print("Done.")
