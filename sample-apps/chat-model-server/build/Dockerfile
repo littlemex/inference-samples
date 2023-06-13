@@ -12,10 +12,8 @@ RUN pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
 
 
 # For Trace ---------------------------------------
-ARG INSTANCE_TYPE
 FROM base-stage AS trace-inf1-stage
 ONBUILD ADD ./trace/requirements_inf1.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements_inf1.txt
 
 FROM base-stage AS trace-inf2-stage
 ONBUILD ADD ./trace/requirements_inf2.txt /tmp/requirements.txt
