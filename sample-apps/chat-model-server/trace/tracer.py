@@ -3,7 +3,7 @@ from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 
 import os
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-instance_type = os.environ['INSTANCE_TYPE']
+instance_type = re.sub(r'[^a-zA-Z0-9]', '', os.environ['INSTANCE_TYPE'])
 print(instance_type)
 
 if instance_type == 'inf1':

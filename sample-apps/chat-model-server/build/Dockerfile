@@ -18,6 +18,12 @@ ONBUILD ADD ./trace/requirements_inf1.txt /tmp/requirements.txt
 FROM base-stage AS trace-inf2-stage
 ONBUILD ADD ./trace/requirements_inf2.txt /tmp/requirements.txt
 
+FROM base-stage AS trace-gpu-stage
+ONBUILD ADD ./trace/requirements_gpu.txt /tmp/requirements.txt
+
+FROM base-stage AS trace-cpu-stage
+ONBUILD ADD ./trace/requirements_cpu.txt /tmp/requirements.txt
+
 FROM trace-${INSTANCE_TYPE}-stage AS trace-stage
 
 RUN pip install -r /tmp/requirements.txt
@@ -29,10 +35,11 @@ ADD ./trace/tracer.py /app/trace
 WORKDIR /app/trace/
 
 # For Model Server --------------------------------
-FROM base AS model-stage
+FROM trace-${INSTANCE_TYPE}-stage AS model-stage
+
+RUN pip install -r /tmp/requirements.txt
 
 RUN mkdir -p /app/server
-
 COPY ./app/requirements.txt /app/server/requirements.txt
 RUN pip3 install -r /app/server/requirements.txt
 

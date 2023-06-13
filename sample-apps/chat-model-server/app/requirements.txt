@@ -1,8 +1,3 @@
 fastapi
 uvicorn[standard]
 datasets[s3]
-transformers==4.18.0
-torch-neuron
-neuron-cc[tensorflow]
-protobuf
-torchvision

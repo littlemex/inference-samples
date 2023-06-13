@@ -1,13 +1,21 @@
 import os
+import re
 import sys
 from logging import DEBUG, StreamHandler, getLogger
 from typing import List
 
 import torch
-import torch_neuron
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, constr
 from transformers import AutoTokenizer
+
+instance_type = re.sub(r'[^a-zA-Z0-9]', '', os.environ['INSTANCE_TYPE'])
+print(instance_type)
+
+if instance_type == 'inf1':
+    import torch_neuron
+elif instance_type == 'inf2' or instance_type == 'trn1':
+    import torch_neuronx
 
 app = FastAPI()
 
@@ -23,11 +31,19 @@ tokenizer_path = os.path.join(PATH_PREFIX, "tokenizer")
 
 LENGTH = 512
 
+device = torch.device("cuda:0" if torch.cuda.is_available() and instance_type == 'gpu' else "cpu")
+print(f"device: {device}")
+
+def to_cpu_if_needed(target):
+    if device == 'cuda:0':
+        return target.cpu().detach().numpy()
+    return target
 
 class ModelInference:
     def __init__(self):
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         self.model = torch.jit.load(model_path)
+        self.model.to(device)
 
     def infer(self, message):
 
@@ -37,11 +53,11 @@ class ModelInference:
         logger.info(f"Input question : {question}, context : {context}")
         inputs = self.tokenizer(
             question, context, add_special_tokens=True, return_tensors="pt", max_length=LENGTH, padding='max_length', truncation=True)
-        inputs_tuple = (inputs["input_ids"], inputs["attention_mask"])
+        inputs_tuple = (inputs["input_ids"].to(device), inputs["attention_mask"].to(device))
 
         with torch.no_grad():
             outputs = self.model(*inputs_tuple)
-            answer_start_scores, answer_end_scores = outputs
+            answer_start_scores, answer_end_scores = to_cpu_if_needed(outputs)
         answer_start = torch.argmax(answer_start_scores)
         answer_end = torch.argmax(answer_end_scores) + 1
         answer = self.tokenizer.convert_tokens_to_string(

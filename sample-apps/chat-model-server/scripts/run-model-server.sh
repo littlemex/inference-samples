@@ -1,4 +1,6 @@
 #!/bin/sh
+ENVHCLFILE=/tmp/env.hcl
+. $ENVHCLFILE
 
 IMAGE_NAME=model
 CONTAINER_NAME=model-server
@@ -14,7 +16,13 @@ if [ -n "$container_id" ]; then
     docker rm -f $container_id
 fi 
 
-run_opts="-d --name ${CONTAINER_NAME} -p 80:80 --device=/dev/neuron0 --network=${NETWORK_NAME}"
+if [ "$INSTANCE_TYPE" = 'gpu' ]; then
+    device_opts="--gpus all"
+elif [ "$INSTANCE_TYPE" = 'inf1' ] || [ "$INSTANCE_TYPE" = 'inf2' ]; then
+    device_opts="--device=/dev/neuron0"
+fi
+
+run_opts="-d --name ${CONTAINER_NAME} -p 80:80 ${device_opts} --network=${NETWORK_NAME} --env-file=${ENVHCLFILE}"
 CMD="docker run ${run_opts} ${IMAGE_NAME}"
 echo "$CMD"
 eval "$CMD"
