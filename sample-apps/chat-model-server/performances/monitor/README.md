@@ -1,5 +1,8 @@
 # how to use
 
+- total_latency: Neuron ランタイムによって測定された実行のレイテンシを表すパーセンタイル (秒単位) 
+- device_latency: Neuron デバイスのみでの実行時間を表すパーセンタイル (秒単位)
+
 ```bash
 export PATH="/opt/bin/:/opt/aws/neuron/bin:${PATH}"
 
