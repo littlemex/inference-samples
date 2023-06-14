@@ -7,16 +7,6 @@ os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 instance_type = re.sub(r'[^a-zA-Z0-9]', '', os.environ['INSTANCE_TYPE'])
 print(instance_type)
 
-if instance_type == 'inf1':
-    import torch_neuron
-    torch_jit = torch.neuron
-elif instance_type == 'inf2' or instance_type == 'trn1':
-    import torch_neuronx
-    torch_jit = torch_neuronx
-else:
-    torch_jit = torch.jit
-
-
 model_name = "ybelkada/japanese-roberta-question-answering"
 ptname = "transformers_neuron.pt"
 processor = "inf1"
@@ -35,6 +25,19 @@ inputs = tokenizer(
 
 
 inputs_tuple = (inputs['input_ids'], inputs['attention_mask'])
+
+if instance_type == 'inf1':
+    import torch_neuron
+    torch_jit = torch.neuron
+    print("inf1, analyze start")
+    torch_jit.analyze_model(model, inputs_tuple)
+    print("inf1, analyze end")
+elif instance_type == 'inf2' or instance_type == 'trn1':
+    import torch_neuronx
+    torch_jit = torch_neuronx
+else:
+    torch_jit = torch.jit
+
 model_traced = torch_jit.trace(model, inputs_tuple)
 model_traced.save(ptname)
 
